@@ -38,6 +38,8 @@ outputs_features = 1
 yp = tf.placeholder(tf.float32,[None,outputs_features])
 
 outputs = add_layer(hidden_layer1,hl1_features, outputs_features)
+loss = tf.reduce_mean(tf.reduce_sum(tf.square(outputs - yp), reduction_indices=1))
+train_step = tf.train.GradientDescentOptimizer(0.2).minimize(loss)
 
 init = tf.initialize_all_variables()
 #create graph end
@@ -46,6 +48,11 @@ init = tf.initialize_all_variables()
 sess = tf.Session()
 sess.run(init)
 
+for i in xrange(1000):
+    if i % 200 == 0:
+        print sess.run(loss, feed_dict={xp : x_train, yp : y_train})
+
+    sess.run(train_step, feed_dict={xp : x_train, yp : y_train})
 
 sess.close()
 #end training
