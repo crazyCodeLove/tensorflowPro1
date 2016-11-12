@@ -25,7 +25,27 @@ def add_layer(inputs, in_feature_size, out_feature_size, activate_function = Non
 
 
 #create graph start
-    #set hidden layer 1 features
+#set hidden layer 1 features
+inputs_features = 1
+hl1_features = 5
+xp = tf.placeholder(tf.float32,[None,inputs_features],"inputs")
+
+hidden_layer1 = add_layer(xp, inputs_features, hl1_features, tf.nn.relu)
 
 
+#set outputs features
+outputs_features = 1
+yp = tf.placeholder(tf.float32,[None,outputs_features])
+
+outputs = add_layer(hidden_layer1,hl1_features, outputs_features)
+
+init = tf.initialize_all_variables()
 #create graph end
+
+#start training
+sess = tf.Session()
+sess.run(init)
+
+
+sess.close()
+#end training
