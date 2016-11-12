@@ -40,7 +40,7 @@ yp = tf.placeholder(tf.float32,[None, hl1_features])
 
 #define loss function
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(yp * tf.log(outputs),reduction_indices = [1]))
-train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+train_step = tf.train.GradientDescentOptimizer(0.2).minimize(cross_entropy)
 
 init = tf.initialize_all_variables()
 #create graph end
@@ -48,7 +48,7 @@ init = tf.initialize_all_variables()
 
 sess = tf.Session()
 sess.run(init)
-for i in xrange(1000):
+for i in xrange(10000):
     batch_x, batch_y = mnist.train.next_batch(120)
     sess.run(train_step, feed_dict= {xp : batch_x, yp : batch_y})
     if i % 50 == 0:
