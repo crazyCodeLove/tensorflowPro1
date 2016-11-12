@@ -62,13 +62,16 @@ with tf.name_scope('loss'):
 with tf.name_scope('train'):
     train_step = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
 
+merged = tf.merge_all_summaries()
 init = tf.initialize_all_variables()
 #create graph end
 
 #start training
 sess = tf.Session()
 logdir = "/home/allen/work/tensorlog/"
-merged = tf.merge_all_summaries()
+
+
+
 writer = tf.train.SummaryWriter(logdir,sess.graph)
 sess.run(init)
 
