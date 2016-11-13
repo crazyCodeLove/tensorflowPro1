@@ -48,15 +48,16 @@ init = tf.initialize_all_variables()
 
 sess = tf.Session()
 sess.run(init)
-for i in xrange(10000):
-    batch_x, batch_y = mnist.train.next_batch(120)
-    sess.run(train_step, feed_dict= {xp : batch_x, yp : batch_y})
-    if i % 50 == 0:
-        # print compute_accuacy(mnist.test.images, mnist.test.labels)
-        ypre = sess.run(outputs, feed_dict={xp: mnist.test.images})
-        correct_prediction = tf.equal(tf.argmax(ypre, 1), tf.argmax(yp, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, dtype= tf.float32))
-        print sess.run(accuracy, feed_dict={xp: mnist.test.images, yp : mnist.test.labels })
 
-
-sess.close()
+try:
+    for i in xrange(1000):
+        batch_x, batch_y = mnist.train.next_batch(120)
+        sess.run(train_step, feed_dict= {xp : batch_x, yp : batch_y})
+        print sess.run(cross_entropy, feed_dict= {xp : batch_x, yp : batch_y})
+        if i % 50 == 0:
+            ypre = sess.run(outputs, feed_dict={xp: mnist.test.images})
+            correct_prediction = tf.equal(tf.argmax(ypre, 1), tf.argmax(yp, 1))
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, dtype= tf.float32))
+            print sess.run(accuracy, feed_dict={xp: mnist.test.images, yp : mnist.test.labels })
+finally:
+    sess.close()
