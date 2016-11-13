@@ -42,6 +42,9 @@ yp = tf.placeholder(tf.float32,[None, hl1_features])
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(yp * tf.log(outputs),reduction_indices = [1]))
 train_step = tf.train.GradientDescentOptimizer(0.2).minimize(cross_entropy)
 
+#define loss function another way
+
+
 init = tf.initialize_all_variables()
 #create graph end
 
@@ -50,10 +53,10 @@ sess = tf.Session()
 sess.run(init)
 
 try:
-    for i in xrange(1000):
+    for i in xrange(10001):
         batch_x, batch_y = mnist.train.next_batch(120)
         sess.run(train_step, feed_dict= {xp : batch_x, yp : batch_y})
-        print sess.run(cross_entropy, feed_dict= {xp : batch_x, yp : batch_y})
+        # print sess.run(cross_entropy, feed_dict= {xp : batch_x, yp : batch_y})
         if i % 50 == 0:
             ypre = sess.run(outputs, feed_dict={xp: mnist.test.images})
             correct_prediction = tf.equal(tf.argmax(ypre, 1), tf.argmax(yp, 1))
