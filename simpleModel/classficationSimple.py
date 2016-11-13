@@ -3,7 +3,6 @@
 import tensorflow as tf
 import numpy as np
 
-
 #define a add layer function
 def add_layer(inputs, in_feature_size, out_feature_size, activate_function = None):
     Weights = tf.Variable(tf.random_normal([in_feature_size,out_feature_size]))
