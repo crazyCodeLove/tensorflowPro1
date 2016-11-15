@@ -17,6 +17,8 @@ def add_layer(inputs, in_features, out_features, layer_name, activate_function =
     :param layer_name: this layer name to show
     :param activate_function: set activate function
     :param keep_prob: if there is drop out layer, set keep probability
+                        if is -1, means in training;
+                        if 0-1, means test or validate
     :return: outputs data and this layer weight
     """
     with tf.name_scope(layer_name):
