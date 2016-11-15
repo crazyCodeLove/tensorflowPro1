@@ -3,63 +3,68 @@
 import tensorflow as tf
 import numpy as np
 
-#define a add layer function
-def add_layer(inputs, in_feature_size, out_feature_size, activate_function = None):
-    Weights = tf.Variable(tf.random_normal([in_feature_size,out_feature_size]))
-    biases = tf.Variable(tf.ones([1,out_feature_size]))
-    y = tf.matmul(inputs, Weights) + biases
-
-    if activate_function is None:
-        outputs = y
-    else:
-        outputs = activate_function(y)
-
-    return outputs
+from tensorflow.examples.tutorials.mnist import input_data
 
 
+#define add layer function
+def add_layer(inputs, in_features, out_features, layer_name, activate_function = None, keep_prob = None):
+    """
 
+    :param inputs: inputs data, numpy.ndarray
+    :param in_features: inputs data feature size
+    :param out_features: outputs data feature size
+    :param layer_name: this layer name to show
+    :param activate_function: set activate function
+    :param keep_prob: if there is drop out layer, set keep probability
+    :return: outputs data and this layer weight
+    """
+    with tf.name_scope(layer_name):
+        Weights = tf.Variable(tf.random_normal([in_features, out_features]))
+        biases = tf.Variable(tf.zeros([1, out_features]))
+        y = tf.matmul(inputs, Weights) + biases
 
+        if activate_function is None:
+            outputs = y
+        else:
+            outputs = activate_function(y)
+
+        if keep_prob is None:
+            return outputs,Weights
+        else:
+            outputs = tf.nn.dropout(outputs, keep_prob)
+            return outputs,Weights
+
+#define calculate accuracy
+def get_accuracy(predictions, labels):
+    return tf.reduce_mean(tf.cast(tf.equal(tf.argmax(predictions, 1), tf.argmax(labels, 1)), tf.float32))
 
 #create data
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("MNIST_DATA/", one_hot=True )
+mnist = input_data.read_data_sets("MNIST_DATA/", one_hot=True)
 
-
-#create graph start
-    #set outputs layer features
-hl1_features = 10
+#create graph
+    #set layer 1 features
 inputs_features = 784
+outputs_features = 10
 
-xp = tf.placeholder(tf.float32,[None,inputs_features])
+xp = tf.placeholder(tf.float32, [None, inputs_features])
+outputs,Weights = add_layer(xp, inputs_features, outputs_features, "outputs", tf.nn.softmax)
 
-outputs = add_layer(xp, inputs_features, hl1_features, tf.nn.softmax)
+#set outputs features
+yp = tf.placeholder(tf.float32, [None, outputs_features])
+loss = tf.reduce_mean(tf.reduce_sum(tf.square(yp - outputs),reduction_indices=[1]))
 
-
-yp = tf.placeholder(tf.float32,[None, hl1_features])
-
-#define loss function
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(yp * tf.log(outputs),reduction_indices = [1]))
-train_step = tf.train.GradientDescentOptimizer(0.2).minimize(cross_entropy)
-
-#define loss function another way
-
-
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
 init = tf.initialize_all_variables()
 #create graph end
 
+with tf.Session() as sess:
+    sess.run(init)
 
-sess = tf.Session()
-sess.run(init)
-
-try:
     for i in xrange(10001):
-        batch_x, batch_y = mnist.train.next_batch(120)
-        sess.run(train_step, feed_dict= {xp : batch_x, yp : batch_y})
-        # print sess.run(cross_entropy, feed_dict= {xp : batch_x, yp : batch_y})
-        if i % 50 == 0:
-            ypre = sess.run(outputs, feed_dict={xp: mnist.test.images})
-            correct_prediction = tf.equal(tf.argmax(ypre, 1), tf.argmax(yp, 1))
-            accuracy = tf.reduce_mean(tf.cast(correct_prediction, dtype= tf.float32))
-            print sess.run(accuracy, feed_dict={xp: mnist.test.images, yp : mnist.test.labels })
-finally:
-    sess.close()
+        train_x, train_y = mnist.train.next_batch(120)
+        sess.run(train_step, feed_dict={ xp : train_x, yp : train_y})
+
+        if i % 50 == 0 :
+            test_x, test_y = mnist.test.next_batch(3000)
+            outs,los =  sess.run([outputs, loss], feed_dict={xp : test_x, yp : test_y})
+            print "%d loss:%.6f, accuracy:%.6f" % (i, los, sess.run(get_accuracy(outs, test_y)))
