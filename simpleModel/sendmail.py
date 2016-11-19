@@ -8,15 +8,15 @@ from email.mime.text import MIMEText
     # 邮件服务器地址
 SMTPserver = "smtp.163.com"
     # 邮件用户名
-username = "pclover11@163.com"
+username = ""
     # 密码
-password = "1128zpc@"
+password = ""
 
 
 # smtp会话过程中的mail from地址
-from_addr = "pclover11@163.com"
+from_addr = ""
 # smtp会话过程中的rcpt to地址
-to_addr = "zhaopengcheng11@aliyun.com"
+to_addr = ""
 
 # 信件内容
 msg = MIMEText("this is another email",'plain',"utf-8")
