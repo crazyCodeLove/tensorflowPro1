@@ -1,4 +1,9 @@
 #coding=utf-8
+"""
+udacity tutorial regularization question answer
+
+
+"""
 
 import tensorflow as tf
 import numpy as np
