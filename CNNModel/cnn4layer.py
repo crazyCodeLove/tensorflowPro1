@@ -53,8 +53,8 @@ img_size = 28
 img_depth = 1
 
 keep_prob = tf.placeholder(tf.float32)
-train_nums = 8001
-batch_size = 30
+train_nums = 18001
+batch_size = 50
 
 #create graph
     #set conv layer 1 features
@@ -125,11 +125,12 @@ with tf.Session() as sess:
         lo,_ = sess.run([loss,train_step],feed_dict={xp:train_x, yp:train_y, keep_prob:0.7})
 
         if i % 50 == 0 :
-            test_x = mnist.test.images
-            test_y = mnist.test.labels
+            # test_x = mnist.test.images
+            # test_y = mnist.test.labels
+            test_x,test_y = mnist.test.next_batch(5000)
             outs = sess.run(outputs,feed_dict={xp:test_x, yp:test_y, keep_prob:-1})
             acc = sess.run(get_accuracy(outs, test_y))
-            print "step %5d loss %.5f acc %.5f"%(i,lo, acc)
+            print "step %5d loss %2.5f acc %.5f"%(i,lo, acc)
 
 
 
