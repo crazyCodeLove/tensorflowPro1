@@ -68,6 +68,9 @@ def fun1():
 
 def Matrix2Img(matrix):
     img = Image.fromarray(matrix)
+
+    #save image to file
+    img.save('new.jpg')
     return img
 
 def Img2Matrix(imgName):
