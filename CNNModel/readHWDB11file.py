@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import os
 import struct
 from PIL import Image
+import tensorflow as tf
 
 dirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
 
@@ -48,19 +49,25 @@ def fun1():
                 print title
                 newbitmap = Image.fromarray(bitmap)
 
-                plt.imshow(newbitmap)
-                plt.title(title)
-                plt.show()
+                # plt.imshow(newbitmap)
+                # plt.title(title)
+                # plt.show()
+
+                # data = newbitmap.getdata()
+                # data = np.matrix(data,dtype=np.float32)
+                # data = data.reshape(bitmap.shape)
+
+
 
 
                 # newimg = Image.fromarray(bitmap)
-                newimg = newbitmap.resize([32,32], Image.BILINEAR)
-
-
-                plt.figure()
-
-                plt.imshow(newimg)
-                plt.show()
+                # newimg = newbitmap.resize([32,32], Image.BILINEAR)
+                #
+                #
+                # plt.figure()
+                #
+                # plt.imshow(newimg)
+                # plt.show()
 
         except EOFError:
             pass
@@ -76,9 +83,8 @@ def Matrix2Img(matrix):
 def Img2Matrix(imgName):
     img = Image.open(imgName)
     width,height = img.size
-    img = img.convert('L')
-    imgdata = img.getdata()
-    imgdata = np.matrix(imgdata,dtype=np.float32)
+
+    imgdata = np.array(img,dtype=np.float32)
     imgdata = np.reshape(imgdata,[width,height])
     return imgdata
 
