@@ -197,10 +197,10 @@ def calculatCharCount():
         numOfFile += 1
 
 def test():
-    fromSrc2Des()
+    # fromSrc2Des()
     # calculatCharCount()
     # showOriImage()
-    # showDesImage()
+    showDesImage()
 
 if __name__ == "__main__":
     test()
