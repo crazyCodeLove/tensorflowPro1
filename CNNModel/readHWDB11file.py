@@ -49,9 +49,9 @@ def fun1():
                 print title
                 newbitmap = Image.fromarray(bitmap)
 
-                # plt.imshow(newbitmap)
-                # plt.title(title)
-                # plt.show()
+                plt.imshow(newbitmap)
+                plt.title(title)
+                plt.show()
 
                 # data = newbitmap.getdata()
                 # data = np.matrix(data,dtype=np.float32)
