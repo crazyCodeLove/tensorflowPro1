@@ -39,9 +39,9 @@ def fromSrc2Des():
 
     numOfFile = 1
 
-    if len(orifilenames)!=0:
-    # for filename in orifilenames:
-        filename = orifilenames[0]
+    # if len(orifilenames)!=0:
+    for filename in orifilenames:
+        # filename = orifilenames[0]
 
         orifilename = os.path.join(oridirname,filename)
 
