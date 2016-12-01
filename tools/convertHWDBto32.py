@@ -15,8 +15,8 @@ import os
 import struct
 from PIL import Image
 
-oridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
-desdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_gnt"
+oridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1tst_gnt"
+desdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
 
 
 tag_buffer = []
@@ -168,6 +168,10 @@ def showDesImage():
 
 
 def calculatCharCount():
+    """
+    计算文件夹下所有不同的字符个数
+    :return:
+    """
     orifilenames = sorted(os.listdir(oridirname))
 
     charSet = set()
@@ -196,11 +200,43 @@ def calculatCharCount():
         print "%3d now character size is "%numOfFile,len(charSet)
         numOfFile += 1
 
+def calculateAllCharacterCount():
+    """
+    计算目标文件夹下所有文件字符总数
+    显示单个文件字符数，总字符数
+    :return:
+    """
+    filenames = os.listdir(desdirname)
+
+    allCharacterCount = 0
+    filenum = 0
+
+    chSize = 2+32*32
+
+    # if len(filenames) != 0:
+    #     filename = filenames[0]
+    #     filename = os.path.join(desdirname,filename)
+
+    for each in filenames:
+        filename = os.path.join(desdirname, each)
+
+        with open(filename,mode='rb') as fobj:
+            content = fobj.read()
+            filenum += 1
+            fileCharacterCount = len(content)/chSize
+
+            allCharacterCount += fileCharacterCount
+
+            print "%d th file, character count is %d, all count is %d"%(filenum, fileCharacterCount, allCharacterCount)
+
+
+
 def test():
-    # fromSrc2Des()
+    # calculateAllCharacterCount()
+    fromSrc2Des()
     # calculatCharCount()
     # showOriImage()
-    showDesImage()
+    # showDesImage()
 
 if __name__ == "__main__":
     test()
