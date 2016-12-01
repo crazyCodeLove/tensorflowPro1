@@ -23,8 +23,8 @@ import struct
 from PIL import Image
 import pickle
 
-oridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
-desdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_pkl"
+trainoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
+traindesdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_pkl"
 
 
 tag_buffer = []
@@ -33,7 +33,7 @@ desfilename = ""
 
 
 def fromSrc2Des():
-    global tag_buffer,bitmap_buffer,desfilename,oridirname,desdirname
+    global tag_buffer,bitmap_buffer,desfilename,trainoridirname,traindesdirname
 
     orifilenames = sorted(os.listdir(oridirname))
 
@@ -118,10 +118,10 @@ def fun2():
 
 
 def showOriImage():
-    orifilenames = sorted(os.listdir(oridirname))
+    orifilenames = sorted(os.listdir(trainoridirname))
 
     filename = orifilenames[0]
-    filename = os.path.join(oridirname, filename)
+    filename = os.path.join(trainoridirname, filename)
 
     with open(filename,mode='rb') as fobj:
         for i in xrange(5):
@@ -145,10 +145,10 @@ def showOriImage():
 
 
 def showDesImage():
-    desFilenames = sorted(os.listdir(desdirname))
+    desFilenames = sorted(os.listdir(traindesdirname))
 
     filename = desFilenames[0]
-    filename = os.path.join(desdirname, filename)
+    filename = os.path.join(traindesdirname, filename)
 
 
     with open(filename,mode='rb') as fobj:
@@ -169,14 +169,14 @@ def showDesImage():
 
 
 def calculatCharCount():
-    orifilenames = sorted(os.listdir(oridirname))
+    orifilenames = sorted(os.listdir(trainoridirname))
 
     charSet = set()
     numOfFile = 1
 
 
     for filename in orifilenames:
-        filename = os.path.join(oridirname, filename)
+        filename = os.path.join(trainoridirname, filename)
 
         with open(filename, mode='rb') as src_fobj:
 

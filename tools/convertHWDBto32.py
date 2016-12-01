@@ -152,7 +152,7 @@ def showOriImage():
 def showDesImage():
     desFilenames = sorted(os.listdir(traindesdirname))
 
-    filename = desFilenames[0]
+    filename = desFilenames[1]
     filename = os.path.join(traindesdirname, filename)
 
     print filename
@@ -219,7 +219,7 @@ def calculateAllCharacterCount(dirname):
     显示单个文件字符数，总字符数
     :return:
     """
-    filenames = os.listdir(dirname)
+    filenames = sorted(os.listdir(dirname))
 
     allCharacterCount = 0
     filenum = 0
@@ -297,11 +297,11 @@ def fun3():
 def test():
     # fun3()
     # createTagIndexMap()
-    # calculateAllCharacterCount()
-    # fromSrc2Des()
-    calculatCharCount(testoridirname)
+    # calculateAllCharacterCount(traindesdirname)
+    # fromSrc2Des(trainoridirname,traindesdirname)
+    # calculatCharCount(testoridirname)
     # showOriImage()
-    # showDesImage()
+    showDesImage()
 
 if __name__ == "__main__":
     test()
