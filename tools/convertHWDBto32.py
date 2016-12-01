@@ -14,18 +14,24 @@ import matplotlib.pyplot as plt
 import os
 import struct
 from PIL import Image
+import pickle
 
-oridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1tst_gnt"
-desdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
 
+trainoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
+traindesdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_gnt"
+
+testoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1tst_gnt"
+testdesdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
+
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des32/tagindexmap.pkl"
 
 tag_buffer = []
 bitmap_buffer = []
 desfilename = ""
 
 
-def fromSrc2Des():
-    global tag_buffer,bitmap_buffer,desfilename,oridirname,desdirname
+def fromSrc2Des(oridirname,desdirname):
+    global tag_buffer,bitmap_buffer,desfilename
 
     orifilenames = sorted(os.listdir(oridirname))
 
@@ -35,8 +41,8 @@ def fromSrc2Des():
     for filename in orifilenames:
         # filename = orifilenames[0]
 
-        orifilename = os.path.join(oridirname,filename)
-        desfilename = os.path.join(desdirname,filename)
+        orifilename = os.path.join(oridirname, filename)
+        desfilename = os.path.join(desdirname, filename)
 
         readFileContent(orifilename)
         write2DesFile(desfilename)
@@ -113,13 +119,15 @@ def fun2():
 
 
 def showOriImage():
-    orifilenames = sorted(os.listdir(oridirname))
+    orifilenames = sorted(os.listdir(trainoridirname))
 
     filename = orifilenames[0]
-    filename = os.path.join(oridirname, filename)
+    filename = os.path.join(trainoridirname, filename)
+
+    print filename
 
     with open(filename,mode='rb') as fobj:
-        for i in xrange(5):
+        for i in xrange(10):
             sampleSize = struct.unpack('<I',fobj.read(4))[0]
             tagcode = fobj.read(2)
             width = struct.unpack('<H', fobj.read(2))[0]
@@ -132,6 +140,8 @@ def showOriImage():
                     pixel = struct.unpack('<B', fobj.read(1))[0]
                     bitmap[i, j] = pixel
 
+            print tagcode.decode('gbk')
+
             plt.figure()
             img = Image.fromarray(bitmap)
             plt.imshow(img)
@@ -140,13 +150,15 @@ def showOriImage():
 
 
 def showDesImage():
-    desFilenames = sorted(os.listdir(desdirname))
+    desFilenames = sorted(os.listdir(traindesdirname))
 
     filename = desFilenames[0]
-    filename = os.path.join(desdirname, filename)
+    filename = os.path.join(traindesdirname, filename)
+
+    print filename
 
     with open(filename,mode='rb') as fobj:
-        for i in xrange(5):
+        for i in xrange(10):
 
             tagcode = fobj.read(2)
             width = 32
@@ -159,6 +171,7 @@ def showDesImage():
                     pixel = struct.unpack('<B', fobj.read(1))[0]
                     bitmap[i, j] = pixel
 
+            print tagcode.decode('gbk')
             plt.figure()
             img = Image.fromarray(bitmap)
             plt.imshow(img)
@@ -167,19 +180,19 @@ def showDesImage():
 
 
 
-def calculatCharCount():
+def calculatCharCount(dirname):
     """
-    计算文件夹下所有不同的字符个数
+    计算原文件夹下所有不同的字符个数
     :return:
     """
-    orifilenames = sorted(os.listdir(oridirname))
+    orifilenames = sorted(os.listdir(dirname))
 
     charSet = set()
     numOfFile = 1
 
 
     for filename in orifilenames:
-        filename = os.path.join(oridirname, filename)
+        filename = os.path.join(dirname, filename)
 
         with open(filename, mode='rb') as src_fobj:
 
@@ -200,13 +213,13 @@ def calculatCharCount():
         print "%3d now character size is "%numOfFile,len(charSet)
         numOfFile += 1
 
-def calculateAllCharacterCount():
+def calculateAllCharacterCount(dirname):
     """
     计算目标文件夹下所有文件字符总数
     显示单个文件字符数，总字符数
     :return:
     """
-    filenames = os.listdir(desdirname)
+    filenames = os.listdir(dirname)
 
     allCharacterCount = 0
     filenum = 0
@@ -218,7 +231,7 @@ def calculateAllCharacterCount():
     #     filename = os.path.join(desdirname,filename)
 
     for each in filenames:
-        filename = os.path.join(desdirname, each)
+        filename = os.path.join(dirname, each)
 
         with open(filename,mode='rb') as fobj:
             content = fobj.read()
@@ -230,11 +243,63 @@ def calculateAllCharacterCount():
             print "%d th file, character count is %d, all count is %d"%(filenum, fileCharacterCount, allCharacterCount)
 
 
+def createTagIndexMap():
+    """
+    将每个汉字编码存放到列表中，按照读入的先后顺序添加
+    :return:
+    """
+    charlist = []
+    filenames = sorted(os.listdir(traindesdirname))
+
+    numOfFile = 0
+    itemlength = 32*32+2
+
+    while len(charlist) < 3755:
+        filename = filenames[numOfFile]
+        filename = os.path.join(traindesdirname, filename)
+
+        with open(filename,mode='rb') as fobj:
+            numOfFile += 1
+            content = fobj.read()
+
+            charnums = len(content)/itemlength
+            for i in xrange(charnums):
+
+                start = i * (itemlength)
+                end = start + 2
+                tagcode = content[start:end]
+
+                if tagcode not in charlist:
+                    charlist.append(tagcode)
+
+    with open(characterTagcodeMapFile,mode='w') as fobj:
+        pickle.dump(charlist,fobj)
+
+    print "create tagcode index map file done"
+
+
+def fun3():
+    """
+    read characterTagcodeMapFile
+
+    :return:
+    """
+    with open(characterTagcodeMapFile) as fobj:
+        data = pickle.load(fobj)
+        print len(data)
+        for i in xrange(10):
+            print data[i].decode('gbk')
+
+
+
+
 
 def test():
+    # fun3()
+    # createTagIndexMap()
     # calculateAllCharacterCount()
-    fromSrc2Des()
-    # calculatCharCount()
+    # fromSrc2Des()
+    calculatCharCount(testoridirname)
     # showOriImage()
     # showDesImage()
 
