@@ -37,11 +37,10 @@ def add_fc_layer(inputs, in_features, out_features, layer_name="layer", activate
         else:
             outputs = activate_function(y)
 
-        if keep_prob == -1:
-            return outputs
-        else:
+        if keep_prob != -1:
             outputs = tf.nn.dropout(outputs,keep_prob)
-            return outputs
+
+        return outputs,Weights
 
 def get_accuracy(prediction,labels):
     return tf.reduce_mean(tf.cast(tf.equal(tf.arg_max(prediction,1),tf.arg_max(labels,1)),dtype=tf.float32))
@@ -53,11 +52,13 @@ img_size = 28
 img_depth = 1
 
 keep_prob = tf.placeholder(tf.float32)
-train_nums = 88001
-batch_size = 30
+train_nums = 80000000001
+batch_size = 20
 
 save_file = "/home/allen/work/variableSave/cnn/cnn4layer.ckpt"
-learning_rate = 1e-5
+learning_rate = 1e-4
+
+alpha = 1e-3
 
 #create graph
     #set conv layer 1 features
@@ -91,7 +92,7 @@ conv_layer3 = add_conv_layer(pool_layer1,cl3_patch_size,cl2_out_depth,cl3_out_de
 
     #set convolution 4 features
 cl4_patch_size = 3
-cl4_out_depth = 128
+cl4_out_depth = 64
 #conv_layer4 is 14*14*128
 conv_layer4 = add_conv_layer(conv_layer3,cl4_patch_size,cl3_out_depth,cl4_out_depth,activate_function=tf.nn.relu)
 
@@ -109,17 +110,18 @@ fcl1_in_features = conv_out_shape[1] * conv_out_shape[2] * conv_out_shape[3]
 fcl1_inputs = tf.reshape(pool_layer2,[-1,fcl1_in_features])
 fcl1_out_features = 1024
 
-fc_layer1 = add_fc_layer(fcl1_inputs,fcl1_in_features,fcl1_out_features,activate_function=tf.nn.relu,keep_prob=keep_prob)
+fc_layer1,Weights1 = add_fc_layer(fcl1_inputs,fcl1_in_features,fcl1_out_features,activate_function=tf.nn.relu,keep_prob=keep_prob)
 
 #set fully connected layer 2 features
 fcl2_out_features = 512
-fc_layer2 = add_fc_layer(fc_layer1,fcl1_out_features,fcl2_out_features,activate_function=tf.nn.relu,keep_prob=keep_prob)
+fc_layer2,Weights2 = add_fc_layer(fc_layer1,fcl1_out_features,fcl2_out_features,activate_function=tf.nn.relu,keep_prob=keep_prob)
 
 #set output layer features
 outputs_features = 10
-outputs = add_fc_layer(fc_layer2,fcl2_out_features,outputs_features,keep_prob=keep_prob)
+outputs,Weights3 = add_fc_layer(fc_layer2,fcl2_out_features,outputs_features,keep_prob=keep_prob)
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(outputs,yp))
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(outputs,yp)) + \
+       alpha*(tf.nn.l2_loss(Weights1) + tf.nn.l2_loss(Weights2) + tf.nn.l2_loss(Weights3))
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 init = tf.initialize_all_variables()
@@ -127,23 +129,25 @@ saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
 
 with tf.Session() as sess:
-    # sess.run(init)
-    saver.restore(sess,save_file)
+    sess.run(init)
+    # saver.restore(sess,save_file)
 
     for i in xrange(train_nums):
         train_x,train_y = mnist.train.next_batch(batch_size)
-        lo,_ = sess.run([loss,train_step],feed_dict={xp:train_x, yp:train_y, keep_prob:0.7})
+        lo,ou,_ = sess.run([loss,outputs,train_step],feed_dict={xp:train_x, yp:train_y, keep_prob:0.7})
 
-        if i % 50 == 0 :
+
+
+        if i % 200 == 0 :
             # test_x = mnist.test.images
             # test_y = mnist.test.labels
 
-            test_x,test_y = mnist.test.next_batch(5000)
+            test_x,test_y = mnist.test.next_batch(6000)
             outs = sess.run(outputs,feed_dict={xp:test_x, yp:test_y, keep_prob:-1})
             acc = sess.run(get_accuracy(outs, test_y))
-            print "step %5d loss %2.5f acc %.5f"%(i,lo, acc)
+            print "step %10d loss %2.5f acc %.5f"%(i,lo, acc)
 
-        if i%1000 == 0:
+        if i%10000 == 0:
             saver.save(sess, save_file)
 
 
