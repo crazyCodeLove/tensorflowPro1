@@ -7,6 +7,7 @@ item,        type,             length,                instance,                 
 Tag code,    char,             2B,                    "阿"=0xb0a1 stored as 0xa1b0
 bitmap,      unsighed char,    width*height bytes,                                  ,  stored row by row
 
+all character class is 3755
 """
 
 import numpy as np
@@ -299,9 +300,9 @@ def test():
     # createTagIndexMap()
     # calculateAllCharacterCount(traindesdirname)
     # fromSrc2Des(trainoridirname,traindesdirname)
-    # calculatCharCount(testoridirname)
+    calculatCharCount(trainoridirname)
     # showOriImage()
-    showDesImage()
+    # showDesImage()
 
 if __name__ == "__main__":
     test()
