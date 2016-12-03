@@ -10,7 +10,8 @@ import pickle
 traindirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_gnt"
 testdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
 
-charSize = 32*32+2
+itemLength = 32 * 32 + 2
+charWidth = 32
 
 characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des32/tagindexmap.pkl"
 
@@ -46,7 +47,7 @@ def next_batch(batchnum,dirname):
                     batch_y = []
 
                 fetchnum = batchnum - len(batch_x)
-                end = start+fetchnum*charSize
+                end = start+ fetchnum * itemLength
 
                 if end <= contentlength:
                     data2list(content, start, end, batch_x, batch_y)
@@ -81,10 +82,9 @@ def next_batch(batchnum,dirname):
                     start = contentlength
 
 def fromList2Stand(batch_x,batch_y):
-    out_x = np.array(batch_x).astype(np.float32)/255
-    out_x = out_x.reshape([-1,1024])
+    out_x = 255 - np.array(batch_x).astype(np.float32)
 
-    out_y = np.zeros([len(batch_y),3755],dtype=np.float32)
+    out_y = np.zeros([len(batch_y),3755],dtype=np.float64)
     for i in xrange(len(batch_y)):
         out_y[i,batch_y[i]] = 1.0
 
@@ -92,16 +92,16 @@ def fromList2Stand(batch_x,batch_y):
 
 
 def data2list(data,start,end,batch_x,batch_y):
-    length = (end-start) / charSize
+    length = (end-start) / itemLength
 
 
     with open(characterTagcodeMapFile) as fobj:
         tagmap = pickle.load(fobj)
 
     for i in xrange(length):
-        substart = i*charSize +start
+        substart = i * itemLength + start
         tagcode = data[substart:substart+2]
-        bitmap = data[substart+2:substart+charSize]
+        bitmap = data[substart+2:substart + itemLength]
 
         bitmap = [struct.unpack('<B',pixcel)[0] for pixcel in bitmap]
 
@@ -113,18 +113,30 @@ def data2list(data,start,end,batch_x,batch_y):
 
 
 def test():
+    global charWidth
 
-    number = 4
-    gen = next_batch(number, testdirname)
+    number = 6
+    gen = next_batch(number, traindirname)
+
+    with open(characterTagcodeMapFile) as fobj:
+        tagmap = pickle.load(fobj)
     
     for i in xrange(10):
         x,y = gen.next()
         plt.figure()
+
+
         for i in xrange(number):
             pic = x[i,:]
-            pic = np.reshape(pic,[32,32])
-            plt.subplot(2,2,i+1)
+            label = y[i,:]
+            index = np.argmax(label)
+            print tagmap[index].decode('gbk'),
+
+            pic = np.reshape(pic,[charWidth,charWidth])
+            plt.subplot(2,3,i+1)
             plt.imshow(pic)
+        print
+
         plt.show()
 
 
