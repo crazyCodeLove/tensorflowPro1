@@ -8,7 +8,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_DATA/", one_hot=True)
 
 #define add conv layer function
-def add_conv_layer(inputs, patch_size, in_depth, out_depth, layer_name="layer", activate_function=None, strides = [1,1,1,1]):
+def add_conv_layer(inputs, patch_size, in_depth, out_depth, layer_name="layer", activate_function=None, keep_prob=-1, strides = [1,1,1,1]):
     with tf.name_scope(layer_name):
         Weights = tf.Variable(tf.truncated_normal([patch_size,patch_size,in_depth, out_depth],stddev=0.1))
         biases = tf.Variable(tf.constant(0.1,tf.float32,[out_depth]))
@@ -19,6 +19,9 @@ def add_conv_layer(inputs, patch_size, in_depth, out_depth, layer_name="layer", 
             outputs = y
         else:
             outputs = activate_function(y)
+
+        if keep_prob!=-1:
+            outputs = tf.nn.dropout(outputs,keep_prob=keep_prob)
 
         return outputs
 
@@ -69,15 +72,15 @@ yp = tf.placeholder(tf.float32,[None,10])
 
 cl1_patch_size = 3
 cl1_in_depth = img_depth
-cl1_out_depth = 10
+cl1_out_depth = 30
 cl1_layer_name = "conv1"
 
 #conv_layer1 is 28*28*10
 conv_layer1 = add_conv_layer(xp_reshape,cl1_patch_size,cl1_in_depth,cl1_out_depth,activate_function=tf.nn.relu)
 
     #set conv layer 2 features
-cl2_patch_size = 3
-cl2_out_depth = 32
+cl2_patch_size = 2
+cl2_out_depth = 60
 #conv layer2 is 28*28*32
 conv_layer2 = add_conv_layer(conv_layer1,cl2_patch_size,cl1_out_depth,cl2_out_depth,activate_function=tf.nn.relu)
 
@@ -85,16 +88,16 @@ conv_layer2 = add_conv_layer(conv_layer1,cl2_patch_size,cl1_out_depth,cl2_out_de
 pool_layer1 = add_max_pool(conv_layer2,step=2)
 
     #set convolution layer 3 features
-cl3_patch_size = 3
-cl3_out_depth = 64
+cl3_patch_size = 2
+cl3_out_depth = 90
 #conv_layer3 is 14*14*64
-conv_layer3 = add_conv_layer(pool_layer1,cl3_patch_size,cl2_out_depth,cl3_out_depth,activate_function=tf.nn.relu)
+conv_layer3 = add_conv_layer(pool_layer1,cl3_patch_size,cl2_out_depth,cl3_out_depth,keep_prob=keep_prob,activate_function=tf.nn.relu)
 
     #set convolution 4 features
-cl4_patch_size = 3
-cl4_out_depth = 64
+cl4_patch_size = 2
+cl4_out_depth = 120
 #conv_layer4 is 14*14*128
-conv_layer4 = add_conv_layer(conv_layer3,cl4_patch_size,cl3_out_depth,cl4_out_depth,activate_function=tf.nn.relu)
+conv_layer4 = add_conv_layer(conv_layer3,cl4_patch_size,cl3_out_depth,cl4_out_depth,keep_prob=keep_prob,activate_function=tf.nn.relu)
 
 #pool_layer2 is 7*7*128
 pool_layer2 = add_max_pool(conv_layer4,step=2)
@@ -129,8 +132,8 @@ saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
 
 with tf.Session() as sess:
-    sess.run(init)
-    # saver.restore(sess,save_file)
+    # sess.run(init)
+    saver.restore(sess,save_file)
 
     for i in xrange(train_nums):
         train_x,train_y = mnist.train.next_batch(batch_size)
@@ -142,7 +145,7 @@ with tf.Session() as sess:
             # test_x = mnist.test.images
             # test_y = mnist.test.labels
 
-            test_x,test_y = mnist.test.next_batch(6000)
+            test_x,test_y = mnist.test.next_batch(2000)
             outs = sess.run(outputs,feed_dict={xp:test_x, yp:test_y, keep_prob:-1})
             acc = sess.run(get_accuracy(outs, test_y))
             print "step %10d loss %2.5f acc %.5f"%(i,lo, acc)
