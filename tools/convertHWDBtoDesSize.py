@@ -8,6 +8,10 @@ Tag code,    char,             2B,                    "阿"=0xb0a1 stored as 0xa
 bitmap,      unsighed char,    width*height bytes,                                  ,  stored row by row
 
 all character class is 3755
+
+characterTagcodeMapFile是一个字符编码和索引对照数组，
+将汉字GBK编码保存到一个数组中，索引和编码形成一个影射关系
+
 """
 
 import numpy as np
