@@ -19,16 +19,16 @@ import pickle
 
 
 trainoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1trn_gnt"
-traindesdirname = "/home/allen/work/data/HWDB1.1des64/train10class"
+traindesdirname = "/home/allen/work/data/HWDB1.1des64/train100class"
 
 testoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1tst_gnt"
-testdesdirname = "/home/allen/work/data/HWDB1.1des64/test10class"
+testdesdirname = "/home/allen/work/data/HWDB1.1des64/test100class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/10class.pkl"
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/100class.pkl"
 oricharacterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/tagindexmap.pkl"
 
 buffer=[]
-class_num = 10
+class_num = 100
 charWidth = 64
 item_length = 2+charWidth*charWidth
 
@@ -90,6 +90,11 @@ def write2DesFile(filename):
         fobj.write(content)
     buffer = []
 
+def process_dir(*dirlist):
+    for each in dirlist:
+        if not os.path.exists(each):
+            os.mkdir(each)
+
 
 
 def limitDesClass():
@@ -105,7 +110,7 @@ def limitDesClass():
         data = pickle.load(fobj)
     data = data[:class_num]
 
-    with open(characterTagcodeMapFile,mode='wb')as fobj:
+    with open(characterTagcodeMapFile,mode='w')as fobj:
         pickle.dump(data,fobj)
 
 
@@ -113,7 +118,7 @@ def showDesImage(desdirname):
     global charWidth
     desFilenames = sorted(os.listdir(desdirname))
 
-    filename = desFilenames[20]
+    filename = desFilenames[0]
     filename = os.path.join(desdirname, filename)
 
     print filename
@@ -173,10 +178,11 @@ def calculateAllCharacterCount(dirname):
 
 
 def test():
+    # process_dir(traindesdirname,testdesdirname)
     # limitDesClass()
-    showDesImage(traindesdirname)
-    # calculateAllCharacterCount(traindesdirname)
-    # fromSrc2Des(trainoridirname,traindesdirname)
+    # showDesImage(traindesdirname)
+    calculateAllCharacterCount(testdesdirname)
+    # fromSrc2Des(testoridirname,testdesdirname)
 
 if __name__ == "__main__":
     test()

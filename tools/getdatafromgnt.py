@@ -7,10 +7,10 @@ from PIL import Image
 import pickle
 
 
-traindirname = "/home/allen/work/data/HWDB1.1des64/train10class"
-testdirname = "/home/allen/work/data/HWDB1.1des64/test10class"
+traindirname = "/home/allen/work/data/HWDB1.1des64/train100class"
+testdirname = "/home/allen/work/data/HWDB1.1des64/test100class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/10class.pkl"
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/100class.pkl"
 
 
 charWidth = 64
@@ -18,7 +18,7 @@ itemLength = charWidth*charWidth + 2
 
 
 
-def next_batch(batchnum,dirname,itemLength):
+def next_batch(batchnum,dirname,itemLength,character_class):
     filenames = sorted(os.listdir(dirname))
     filenum = -1
     batch_x = []
@@ -36,7 +36,7 @@ def next_batch(batchnum,dirname,itemLength):
         filename = filenames[filenum]
         filename = os.path.join(dirname, filename)
 
-        print filename
+        # print filename
 
         with open(filename,mode='rb') as fobj:
             content = fobj.read()
@@ -54,7 +54,7 @@ def next_batch(batchnum,dirname,itemLength):
                 if end <= contentlength:
                     data2list(content, start, end, batch_x, batch_y,itemLength)
                     start = end
-                    batch_x,batch_y = fromList2Stand(batch_x,batch_y)
+                    batch_x,batch_y = fromList2Stand(batch_x,batch_y,character_class)
                     yield batch_x,batch_y
 
 
@@ -83,10 +83,10 @@ def next_batch(batchnum,dirname,itemLength):
                     data2list(content, start, end,batch_x, batch_y,itemLength)
                     start = contentlength
 
-def fromList2Stand(batch_x,batch_y):
+def fromList2Stand(batch_x,batch_y,character_class):
     out_x = 255 - np.array(batch_x).astype(np.float32)
 
-    out_y = np.zeros([len(batch_y),3755],dtype=np.float64)
+    out_y = np.zeros([len(batch_y),character_class],dtype=np.float64)
     for i in xrange(len(batch_y)):
         out_y[i,batch_y[i]] = 1.0
 
@@ -116,14 +116,15 @@ def data2list(data,start,end,batch_x,batch_y,itemLength):
 
 def test():
     global charWidth,itemLength
+    character_class = 100
 
     number = 6
-    gen = next_batch(number, traindirname,itemLength)
+    gen = next_batch(number, traindirname,itemLength, character_class)
 
     with open(characterTagcodeMapFile) as fobj:
         tagmap = pickle.load(fobj)
     
-    for i in xrange(10):
+    for j in xrange(10):
         x,y = gen.next()
         plt.figure()
 
