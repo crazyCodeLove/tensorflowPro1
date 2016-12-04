@@ -22,13 +22,14 @@ from PIL import Image
 import pickle
 
 
-trainoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
+dirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1trn_gnt"
 traindesdirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1trn_gnt"
 
 testoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1tst_gnt"
 testdesdirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1tst_gnt"
 
 characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/tagindexmap.pkl"
+descharacterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/10class.pkl"
 
 tag_buffer = []
 bitmap_buffer = []
@@ -125,16 +126,23 @@ def fun2():
         print '%r'%tag
 
 
-def showOriImage():
-    orifilenames = sorted(os.listdir(trainoridirname))
+def showOriImage(dirname):
+    orifilenames = sorted(os.listdir(dirname))
 
-    filename = orifilenames[0]
-    filename = os.path.join(trainoridirname, filename)
+    filename = orifilenames[40]
+    filename = os.path.join(dirname, filename)
 
     print filename
 
+    with open(descharacterTagcodeMapFile) as fobj:
+        tagcodeMap = pickle.load(fobj)
+
     with open(filename,mode='rb') as fobj:
-        for i in xrange(10):
+        for numi in range(1900):
+
+
+            # for numj in range(6):
+
             sampleSize = struct.unpack('<I',fobj.read(4))[0]
             tagcode = fobj.read(2)
             width = struct.unpack('<H', fobj.read(2))[0]
@@ -149,11 +157,16 @@ def showOriImage():
 
             print tagcode.decode('gbk')
 
-            plt.figure()
-            img = Image.fromarray(bitmap)
-            plt.imshow(img)
 
-            plt.show()
+            if tagcode in tagcodeMap:
+
+                img = Image.fromarray(bitmap)
+                plt.figure()
+                # plt.subplot(2,3, numj+1)
+                plt.imshow(img)
+                # print
+
+                plt.show()
 
 
 def showDesImage(desdirname):
@@ -305,9 +318,9 @@ def test():
     # fun3()
     # createTagIndexMap()
     # calculateAllCharacterCount(traindesdirname)
-    fromSrc2Des(trainoridirname,traindesdirname)
+    # fromSrc2Des(trainoridirname,traindesdirname)
     # calculatCharCount(trainoridirname)
-    # showOriImage()
+    showOriImage(testoridirname)
     # showDesImage(traindesdirname)
 
 if __name__ == "__main__":

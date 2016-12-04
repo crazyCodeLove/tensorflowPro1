@@ -7,16 +7,18 @@ from PIL import Image
 import pickle
 
 
-traindirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_gnt"
-testdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
+traindirname = "/home/allen/work/data/HWDB1.1des64/train10class"
+testdirname = "/home/allen/work/data/HWDB1.1des64/test10class"
 
-itemLength = 32 * 32 + 2
-charWidth = 32
-
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des32/tagindexmap.pkl"
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/10class.pkl"
 
 
-def next_batch(batchnum,dirname):
+charWidth = 64
+itemLength = charWidth*charWidth + 2
+
+
+
+def next_batch(batchnum,dirname,itemLength):
     filenames = sorted(os.listdir(dirname))
     filenum = -1
     batch_x = []
@@ -50,7 +52,7 @@ def next_batch(batchnum,dirname):
                 end = start+ fetchnum * itemLength
 
                 if end <= contentlength:
-                    data2list(content, start, end, batch_x, batch_y)
+                    data2list(content, start, end, batch_x, batch_y,itemLength)
                     start = end
                     batch_x,batch_y = fromList2Stand(batch_x,batch_y)
                     yield batch_x,batch_y
@@ -78,7 +80,7 @@ def next_batch(batchnum,dirname):
 
                 else:
                     end = contentlength
-                    data2list(content, start, end,batch_x, batch_y)
+                    data2list(content, start, end,batch_x, batch_y,itemLength)
                     start = contentlength
 
 def fromList2Stand(batch_x,batch_y):
@@ -91,7 +93,7 @@ def fromList2Stand(batch_x,batch_y):
     return out_x,out_y
 
 
-def data2list(data,start,end,batch_x,batch_y):
+def data2list(data,start,end,batch_x,batch_y,itemLength):
     length = (end-start) / itemLength
 
 
@@ -113,10 +115,10 @@ def data2list(data,start,end,batch_x,batch_y):
 
 
 def test():
-    global charWidth
+    global charWidth,itemLength
 
     number = 6
-    gen = next_batch(number, traindirname)
+    gen = next_batch(number, traindirname,itemLength)
 
     with open(characterTagcodeMapFile) as fobj:
         tagmap = pickle.load(fobj)
