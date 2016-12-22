@@ -1,4 +1,15 @@
 #coding=utf-8
+
+"""
+test data all character number is:      223991
+test data 1000 class,character number is 59688
+
+train database,all character number is 897758
+train 1000 class, character number is  239064
+
+
+"""
+
 import os
 import numpy as np
 import struct
@@ -7,10 +18,10 @@ from PIL import Image
 import pickle
 
 
-traindirname = "/home/allen/work/data/HWDB1.1des64/train100class"
-testdirname = "/home/allen/work/data/HWDB1.1des64/test100class"
+traindirname = "/home/allen/work/data/HWDB1.1des64/train1000class"
+testdirname = "/home/allen/work/data/HWDB1.1des64/test1000class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/100class.pkl"
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/1000class.pkl"
 
 
 charWidth = 64
@@ -18,7 +29,7 @@ itemLength = charWidth*charWidth + 2
 
 
 
-def next_batch(batchnum,dirname,itemLength,character_class):
+def next_batch(batchnum, dirname, itemLength, character_class, charTagcodeMapFile):
     filenames = sorted(os.listdir(dirname))
     filenum = -1
     batch_x = []
@@ -52,7 +63,7 @@ def next_batch(batchnum,dirname,itemLength,character_class):
                 end = start+ fetchnum * itemLength
 
                 if end <= contentlength:
-                    data2list(content, start, end, batch_x, batch_y,itemLength)
+                    data2list(content, start, end, batch_x, batch_y, itemLength, charTagcodeMapFile)
                     start = end
                     batch_x,batch_y = fromList2Stand(batch_x,batch_y,character_class)
                     yield batch_x,batch_y
@@ -80,7 +91,7 @@ def next_batch(batchnum,dirname,itemLength,character_class):
 
                 else:
                     end = contentlength
-                    data2list(content, start, end,batch_x, batch_y,itemLength)
+                    data2list(content, start, end, batch_x, batch_y, itemLength, charTagcodeMapFile)
                     start = contentlength
 
 def fromList2Stand(batch_x,batch_y,character_class):
@@ -93,7 +104,7 @@ def fromList2Stand(batch_x,batch_y,character_class):
     return out_x,out_y
 
 
-def data2list(data,start,end,batch_x,batch_y,itemLength):
+def data2list(data,start,end,batch_x,batch_y,itemLength,characterTagcodeMapFile):
     length = (end-start) / itemLength
 
 
@@ -115,11 +126,11 @@ def data2list(data,start,end,batch_x,batch_y,itemLength):
 
 
 def test():
-    global charWidth,itemLength
-    character_class = 100
+    global charWidth,itemLength,characterTagcodeMapFile
+    character_class = 1000
 
     number = 6
-    gen = next_batch(number, traindirname,itemLength, character_class)
+    gen = next_batch(number, testdirname,itemLength, character_class,characterTagcodeMapFile)
 
     with open(characterTagcodeMapFile) as fobj:
         tagmap = pickle.load(fobj)

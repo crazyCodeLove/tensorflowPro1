@@ -8,6 +8,13 @@ Tag code,    char,             2B,                    "阿"=0xb0a1 stored as 0xa
 bitmap,      unsighed char,    width*height bytes,                                  ,  stored row by row
 
 all character class is 3755
+
+test data all character number is:      223991
+test data 1000 class,character number is 59688
+
+train database,all character number is 897758
+train 1000 class, character number is  239064
+
 """
 
 import numpy as np
@@ -19,16 +26,16 @@ import pickle
 
 
 trainoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1trn_gnt"
-traindesdirname = "/home/allen/work/data/HWDB1.1des64/train100class"
+traindesdirname = "/home/allen/work/data/HWDB1.1des64/train1000class"
 
 testoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1tst_gnt"
-testdesdirname = "/home/allen/work/data/HWDB1.1des64/test100class"
+testdesdirname = "/home/allen/work/data/HWDB1.1des64/test1000class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/100class.pkl"
+characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/1000class.pkl"
 oricharacterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/tagindexmap.pkl"
 
 buffer=[]
-class_num = 100
+class_num = 1000
 charWidth = 64
 item_length = 2+charWidth*charWidth
 
@@ -180,9 +187,13 @@ def calculateAllCharacterCount(dirname):
 def test():
     # process_dir(traindesdirname,testdesdirname)
     # limitDesClass()
-    # showDesImage(traindesdirname)
+    # showDesImage(testdesdirname)
     calculateAllCharacterCount(testdesdirname)
-    # fromSrc2Des(testoridirname,testdesdirname)
+    # calculateAllCharacterCount(trainoridirname)
+    # calculateAllCharacterCount(traindesdirname)
+
+
+    # fromSrc2Des(trainoridirname,traindesdirname)
 
 if __name__ == "__main__":
     test()

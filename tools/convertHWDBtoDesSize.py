@@ -9,6 +9,12 @@ bitmap,      unsighed char,    width*height bytes,                              
 
 all character class is 3755
 
+test data all character number is:      223991
+test data 1000 class,character number is 59688
+
+train database,all character number is 897758
+train 1000 class, character number is  239064
+
 characterTagcodeMapFile是一个字符编码和索引对照数组，
 将汉字GBK编码保存到一个数组中，索引和编码形成一个影射关系
 
