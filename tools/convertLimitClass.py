@@ -7,13 +7,50 @@ item,        type,             length,                instance,                 
 Tag code,    char,             2B,                    "阿"=0xb0a1 stored as 0xa1b0
 bitmap,      unsighed char,    width*height bytes,                                  ,  stored row by row
 
+#####   HWDB1.1  start   ####
 all character class is 3755
 
 test data all character number is:      223991
 test data 1000 class,character number is 59688
+test data 100 class,character number is 5975
+
 
 train database,all character number is 897758
-train 1000 class, character number is  239064
+train data 1000 class, character number is  239064
+train data 100 class,character number is 23936
+#####   HWDB1.1  end   ####
+
+
+#####   HWDB1.0  start   ####
+all character class is 3740, all class in HWDB1.1
+
+test data all character number is:       309684
+test data 100 class,character number is:
+
+
+train database,all character number is:  1246991
+train data 100 class,character number is:
+#####   HWDB1.0  end   ####
+
+
+
+#####  compete test data start     ####
+character class is:3740+15, 3740 in DB1.1, 15 not in DB1.1
+
+compete test data, all character number is:224419
+
+
+
+#####  compete test data end     ####
+
+
+all character
+test data all 3755 class, character number is:   533675
+train data all 3755 class, character number is: 2144749
+
+test data 100 class, character number is:  14124
+train data 100 class, character number is: 57304
+
 
 """
 
@@ -25,22 +62,37 @@ from PIL import Image
 import pickle
 
 
+trainoridirnamev0 = "/home/allen/work/data/HWDB1.0des64/HWDB1.0trn_gnt"
+traindesdirnamev0 = "/home/allen/work/data/limitclass/train100class"
+
+testoridirnamev0 = "/home/allen/work/data/HWDB1.0des64/HWDB1.0tst_gnt"
+testdesdirnamev0 = "/home/allen/work/data/limitclass/test100class"
+
 trainoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1trn_gnt"
-traindesdirname = "/home/allen/work/data/HWDB1.1des64/train1000class"
+traindesdirname = "/home/allen/work/data/limitclass/train100class"
 
 testoridirname = "/home/allen/work/data/HWDB1.1des64/HWDB1.1tst_gnt"
-testdesdirname = "/home/allen/work/data/HWDB1.1des64/test1000class"
+testdesdirname = "/home/allen/work/data/limitclass/test100class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/1000class.pkl"
-oricharacterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/tagindexmap.pkl"
+compete_test_oridir = "/home/allen/work/data/competeTestdes64"
+compete_test_desdir = "/home/allen/work/data/limitclass/compete100test"
+
+descharacterTagcodeMapFile = "/home/allen/work/data/100class.pkl"
+oricharacterTagcodeMapFile = "/home/allen/work/data/tagindexmap.pkl"
 
 buffer=[]
-class_num = 1000
+class_num = 100
 charWidth = 64
 item_length = 2+charWidth*charWidth
 
 
 def fromSrc2Des(oridirname,desdirname):
+    """
+    将原文件夹下文件内字符在descharacterTagcodeMapFile中的字符写到目标文件夹中
+    :param oridirname:
+    :param desdirname:
+    :return:
+    """
     global tag_buffer,bitmap_buffer,desfilename
 
     orifilenames = sorted(os.listdir(oridirname))
@@ -57,13 +109,18 @@ def fromSrc2Des(oridirname,desdirname):
         readFileContent(orifilename)
         write2DesFile(desfilename)
 
-        print "%5dth file convert completed"%(numOfFile)
+        print "%5dth file %s convert completed"%(numOfFile,orifilename)
         numOfFile += 1
 
 def readFileContent(filename):
-    global buffer,class_num,characterTagcodeMapFile,item_length
+    """
+    读取文件，将tagcode在descharacterTagcodeMapFile文件中的字符保存到buffer中
+    方便以后写入目标文件中
+    :param filename: 要读取的文件
+    """
+    global buffer,class_num,descharacterTagcodeMapFile,item_length
 
-    with open(characterTagcodeMapFile) as fobj:
+    with open(descharacterTagcodeMapFile) as fobj:
         tagcodeMap = pickle.load(fobj)
 
     with open(filename,mode='rb') as fobj:
@@ -84,7 +141,14 @@ def readFileContent(filename):
 
 
 def write2DesFile(filename):
+    """
+    将buffer中的字符(tagcode,bitmap)写进目标文件
+    :param filename: 要写入的文件名
+    """
     global buffer
+    if len(buffer) == 0:
+        return
+
     with open(filename,'wb') as fobj:
         content = ''.join(buffer)
 
@@ -111,21 +175,22 @@ def limitDesClass():
     :return:
     """
     global class_num
-    global oricharacterTagcodeMapFile,characterTagcodeMapFile
+    global oricharacterTagcodeMapFile,descharacterTagcodeMapFile
 
     with open(oricharacterTagcodeMapFile) as fobj:
         data = pickle.load(fobj)
     data = data[:class_num]
 
-    with open(characterTagcodeMapFile,mode='w')as fobj:
+    with open(descharacterTagcodeMapFile, mode='w')as fobj:
         pickle.dump(data,fobj)
+    print "process done"
 
 
 def showDesImage(desdirname):
     global charWidth
     desFilenames = sorted(os.listdir(desdirname))
 
-    filename = desFilenames[0]
+    filename = desFilenames[3]
     filename = os.path.join(desdirname, filename)
 
     print filename
@@ -182,18 +247,85 @@ def calculateAllCharacterCount(dirname):
             print "%d th file, character count is %d, all count is %d"%(filenum, fileCharacterCount, allCharacterCount)
 
 
+def checkWhetherDB0inDB1(dirname, descharTagcodeMapFile):
+    """
+    检测dirname文件夹字符是否都在descharacterTagcodeMapFile上面
+    如果不在，显示出来。
+    处理过每个文件后，显示一下当前读取到的不同字符种类数目
+
+    :param dirname:HWDB1.0数据库文件夹
+    :return:
+    """
+    global item_length
+
+    with open(descharTagcodeMapFile) as rfobj:
+        destagcodemap = pickle.load(rfobj)
+
+    db0tagcodemap = []
+    filenames = sorted(os.listdir(dirname))
+    for eachfilename in filenames:
+        filename = os.path.join(dirname,eachfilename)
+        with open(filename, mode='rb') as rfobj:
+            content = rfobj.read()
+
+        charnum = len(content)/item_length
+        for i in xrange(charnum):
+            start = i*item_length
+            tagcode = content[start:start+2]
+
+            if (tagcode in destagcodemap) and (tagcode not in db0tagcodemap):
+                db0tagcodemap.append(tagcode)
+
+                #如果不在descharTagcodeMapfile中，就将该字符显示出来
+            elif tagcode not in destagcodemap:
+                print tagcode.decode('gbk'),"not in destagcodemap"
+
+        print "process "+filename+", now db0tagcodemap length is ",len(db0tagcodemap)
+
+
+def startCheck():
+    global trainoridirnamev0,testoridirnamev0,descharacterTagcodeMapFile,oricharacterTagcodeMapFile
+    global compete_test_desdir,compete_test_oridir
+
+    checkWhetherDB0inDB1(compete_test_desdir,descharacterTagcodeMapFile)
+    print "####train DB check over\n\n\n\n\n"
+    # checkWhetherDB0inDB1(testoridirnamev0,descharacterTagcodeMapFile)
+
+
+def remove_empty_file():
+    global traindesdirnamev0,testdesdirnamev0
+    dirnames = [traindesdirnamev0,testdesdirnamev0]
+    for dirname in dirnames:
+        filenames = sorted(os.listdir(dirname))
+        for itfname in filenames:
+            filename = os.path.join(dirname,itfname)
+            with open(filename) as rfobj:
+                content = rfobj.read()
+            if len(content) == 0:
+                os.remove(filename)
+                print filename+" removed"
+
+    print "process over"
+
 
 
 def test():
-    # process_dir(traindesdirname,testdesdirname)
+    # process_dir(traindesdirnamev0,testdesdirnamev0)
     # limitDesClass()
-    # showDesImage(testdesdirname)
+    # showDesImage(traindesdirnamev0)
     calculateAllCharacterCount(testdesdirname)
+
     # calculateAllCharacterCount(trainoridirname)
-    # calculateAllCharacterCount(traindesdirname)
+    # calculateAllCharacterCount(traindesdirnamev0)
+    # startCheck()
+    # remove_empty_file()
 
 
-    # fromSrc2Des(trainoridirname,traindesdirname)
+    # fromSrc2Des(trainoridirnamev0,traindesdirnamev0)
+    # fromSrc2Des(testoridirnamev0,testdesdirnamev0)
+    #
+    # fromSrc2Des(trainoridirname, traindesdirname)
+    # fromSrc2Des(testoridirname, testdesdirname)
 
 if __name__ == "__main__":
     test()

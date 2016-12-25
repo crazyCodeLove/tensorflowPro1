@@ -24,7 +24,7 @@ traindesdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1trn_gnt"
 testoridirname = "/home/allen/work/data/HWDB1.1orign/HWDB1.1tst_gnt"
 testdesdirname = "/home/allen/work/data/HWDB1.1des32/HWDB1.1tst_gnt"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des32/tagindexmap.pkl"
+descharacterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des32/tagindexmap.pkl"
 
 tag_buffer = []
 bitmap_buffer = []
@@ -273,7 +273,7 @@ def createTagIndexMap():
                 if tagcode not in charlist:
                     charlist.append(tagcode)
 
-    with open(characterTagcodeMapFile,mode='w') as fobj:
+    with open(descharacterTagcodeMapFile, mode='w') as fobj:
         pickle.dump(charlist,fobj)
 
     print "create tagcode index map file done"
@@ -285,7 +285,7 @@ def fun3():
 
     :return:
     """
-    with open(characterTagcodeMapFile) as fobj:
+    with open(descharacterTagcodeMapFile) as fobj:
         data = pickle.load(fobj)
         print len(data)
         for i in xrange(10):

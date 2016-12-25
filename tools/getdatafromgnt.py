@@ -1,12 +1,38 @@
 #coding=utf-8
 
 """
+目标文件中每个字符由tagcode和bitmap组成,
+单个字符长度item length=tagcode(2) + bitmap(desCharSize*desCharSize)
+
+#####   HWDB1.1  start   ####
+all character class is 3755
+
 test data all character number is:      223991
 test data 1000 class,character number is 59688
+test data 100 class,character number is 5975
+
 
 train database,all character number is 897758
-train 1000 class, character number is  239064
+train data 1000 class, character number is  239064
+train data 100 class,character number is 23936
+#####   HWDB1.1  end   ####
 
+
+#####   HWDB1.0  start   ####
+all character class is 3740, all class in HWDB1.1
+
+test data all character number is:       309684
+test data 100 class,character number is:
+
+
+train database,all character number is:  1246991
+train data 100 class,character number is:
+#####   HWDB1.0  end   ####
+
+all character
+
+test data 100 class, character number is:  14202
+train data 100 class, character number is: 56987
 
 """
 
@@ -16,12 +42,13 @@ import struct
 import matplotlib.pyplot as plt
 from PIL import Image
 import pickle
+import random
 
 
-traindirname = "/home/allen/work/data/HWDB1.1des64/train1000class"
-testdirname = "/home/allen/work/data/HWDB1.1des64/test1000class"
+traindirname = "/home/allen/work/data/limitclass/train100class"
+testdirname = "/home/allen/work/data/limitclass/test100class"
 
-characterTagcodeMapFile = "/home/allen/work/data/HWDB1.1des64/1000class.pkl"
+descharacterTagcodeMapFile = "/home/allen/work/data/100class.pkl"
 
 
 charWidth = 64
@@ -30,15 +57,19 @@ itemLength = charWidth*charWidth + 2
 
 
 def next_batch(batchnum, dirname, itemLength, character_class, charTagcodeMapFile):
+    """
+
+    :param batchnum: 一次取
+    :param dirname:
+    :param itemLength:
+    :param character_class:
+    :param charTagcodeMapFile:
+    :return:
+    """
     filenames = sorted(os.listdir(dirname))
     filenum = -1
     batch_x = []
     batch_y = []
-
-    # with open(characterTagcodeMapFile) as fobj:
-    #     tagmap = pickle.load(fobj)
-
-
 
     while True:
         filenum += 1
@@ -68,8 +99,73 @@ def next_batch(batchnum, dirname, itemLength, character_class, charTagcodeMapFil
                     batch_x,batch_y = fromList2Stand(batch_x,batch_y,character_class)
                     yield batch_x,batch_y
 
+                    # for each in batch_y:
+                    #     print tagmap[each].decode('gbk'),
+                    #
+                    # print ""
+                    # for each in batch_x:
+                    #     each = np.array(each).astype(dtype=np.float32).reshape([32,32])
+                    #
+                    #     each = Image.fromarray(each)
+                    #     each.show()
+                    #     plt.figure()
+                    #     plt.imshow(each)
+                    #     plt.show()
 
 
+                else:
+                    end = contentlength
+                    data2list(content, start, end, batch_x, batch_y, itemLength, charTagcodeMapFile)
+                    start = contentlength
+
+def next_batch_dirs(batchnum, dirnames, itemLength, character_class, charTagcodeMapFile):
+    """
+
+    :param batchnum: 每次取的字符数
+    :param dirnames: 目标文件的文件夹列表
+    :param itemLength: 每个字符占用的字节数, = tagcode(2) + charWidth(64)*charWidth(64)
+    :param character_class: 目标文件夹下的字符类别数
+    :param charTagcodeMapFile: 使用哪一个tagcodemap影射文件
+    :return: one hot 编码的一组[batch_x,batch_y]
+    """
+
+    filenames = []
+    for eachdir in dirnames:
+        tfnames = os.listdir(eachdir)
+        tfnames = [os.path.join(eachdir,fname) for fname in tfnames]
+        filenames.extend(tfnames)
+
+    random.shuffle(filenames)
+    filenum = -1
+    batch_x = []
+    batch_y = []
+
+    while True:
+        filenum += 1
+        filenum = filenum % len(filenames)
+
+        filename = filenames[filenum]
+
+        # print filename
+
+        with open(filename,mode='rb') as fobj:
+            content = fobj.read()
+            contentlength = len(content)
+            start = 0
+
+            while start<contentlength:
+                if len(batch_y) == batchnum:
+                    batch_x = []
+                    batch_y = []
+
+                fetchnum = batchnum - len(batch_x)
+                end = start+ fetchnum * itemLength
+
+                if end <= contentlength:
+                    data2list(content, start, end, batch_x, batch_y, itemLength, charTagcodeMapFile)
+                    start = end
+                    batch_x,batch_y = fromList2Stand(batch_x,batch_y,character_class)
+                    yield batch_x,batch_y
 
                     # for each in batch_y:
                     #     print tagmap[each].decode('gbk'),
@@ -85,16 +181,21 @@ def next_batch(batchnum, dirname, itemLength, character_class, charTagcodeMapFil
                     #     plt.show()
 
 
-
-
-
-
                 else:
                     end = contentlength
                     data2list(content, start, end, batch_x, batch_y, itemLength, charTagcodeMapFile)
                     start = contentlength
 
+
+
 def fromList2Stand(batch_x,batch_y,character_class):
+    """
+
+    :param batch_x:
+    :param batch_y:
+    :param character_class:
+    :return:
+    """
     out_x = 255 - np.array(batch_x).astype(np.float32)
 
     out_y = np.zeros([len(batch_y),character_class],dtype=np.float64)
@@ -105,6 +206,17 @@ def fromList2Stand(batch_x,batch_y,character_class):
 
 
 def data2list(data,start,end,batch_x,batch_y,itemLength,characterTagcodeMapFile):
+    """
+
+    :param data:
+    :param start:
+    :param end:
+    :param batch_x:
+    :param batch_y:
+    :param itemLength:
+    :param characterTagcodeMapFile:
+    :return:
+    """
     length = (end-start) / itemLength
 
 
@@ -126,13 +238,13 @@ def data2list(data,start,end,batch_x,batch_y,itemLength,characterTagcodeMapFile)
 
 
 def test():
-    global charWidth,itemLength,characterTagcodeMapFile
-    character_class = 1000
+    global charWidth,itemLength,descharacterTagcodeMapFile
+    character_class = 100
 
     number = 6
-    gen = next_batch(number, testdirname,itemLength, character_class,characterTagcodeMapFile)
+    gen = next_batch_dirs(number, [testdirname,],itemLength, character_class,descharacterTagcodeMapFile)
 
-    with open(characterTagcodeMapFile) as fobj:
+    with open(descharacterTagcodeMapFile) as fobj:
         tagmap = pickle.load(fobj)
     
     for j in xrange(10):

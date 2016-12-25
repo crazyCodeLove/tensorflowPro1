@@ -3,6 +3,13 @@
 MyLog is to log result
 learning_rate_down is to down learning rate
 
+all character
+test data all 3755 class, character number is:   533675
+train data all 3755 class, character number is: 2144749
+
+test data 100 class, character number is:  14202
+train data 100 class, character number is: 56987
+
 """
 import logging
 import tensorflow as tf
@@ -70,8 +77,215 @@ def add_conv_layer(inputs, kernalWidth, inDepth, outDepth,
 
         return outputs,Weights
 
+def add_carriage_zero_pad(same_width_block_num,inputs, kernalWidth, inDepth,
+                              is_training_ph, scope=None, layername="layer",
+                              activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    由一个dimension increase block和building_block_serial组合在一起,形成一个carriage
+    注意：在添加carriage时，会有一个max_pooling层，注意不要超过最大可以pooling的层数
+    the depth of outputs is 2*inDepth
+
+
+    :param same_width_block_num: the number of same width building bolck
+    :param inputs:
+    :param kernalWidth:
+    :param inDepth:
+    :param is_training_ph:
+    :param scope:
+    :param layername:
+    :param activateFunc:
+    :param stride:
+    :return:
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+    depth = inDepth
+
+    tscope =scope + "pad"
+    y1 = building_block_zero_pad(inputs,kernalWidth,depth,
+                                 is_training_ph,scope=tscope,layername=layername,
+                                 activateFunc=activateFunc,stride=stride)
+    tscope = scope + "ser"
+    depth *= 2
+    outputs = add_building_block_serial(same_width_block_num,y1, kernalWidth, depth,
+                              is_training_ph, scope=tscope, layername=layername,
+                              activateFunc=activateFunc, stride=stride)
+
+    return outputs
+
+def add_carriage_proj(same_width_block_num,inputs, kernalWidth, inDepth,
+                              is_training_ph, scope=None, layername="layer",
+                              activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    由一个dimension increase block和building_block_serial组合在一起
+    形成一个carriage
+    注意：在添加carriage时，会有一个max_pooling层，注意不要超过最大可以pooling的层数
+    the depth of outputs is 2*inDepth
+
+    :param same_width_block_num: the number of same width building bolck
+    :param inputs:
+    :param kernalWidth:
+    :param inDepth:
+    :param is_training_ph:
+    :param scope:
+    :param layername:
+    :param activateFunc:
+    :param stride:
+    :return:
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+    depth = 2*inDepth
+
+    tscope =scope + "pad"
+    y1 = building_block_project(inputs,kernalWidth,inDepth,
+                                is_training_ph,scope=tscope,layername=layername,
+                                activateFunc=activateFunc,stride=stride)
+
+    tscope = scope + "ser"
+    outputs = add_building_block_serial(same_width_block_num,y1, kernalWidth, depth,
+                              is_training_ph, scope=tscope, layername=layername,
+                              activateFunc=activateFunc, stride=stride)
+
+    return outputs
+
+
+
+def add_building_block_serial(nums,inputs, kernalWidth, inDepth,
+                              is_training_ph, scope=None, layername="layer",
+                              activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    将一组same width的building_bolck组合在一起,形成一串
+    the depth of outputs is same as inDepth
+
+    :param nums:
+    :param inputs:
+    :param kernalWidth:
+    :param inDepth:
+    :param is_training_ph:
+    :param scope:
+    :param layername:
+    :param activateFunc:
+    :param stride:
+    :return:
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+
+    outputs = inputs
+    for it in range(nums):
+        tscope = scope + "block" + str(it)
+        outputs = building_block_same_width(outputs,kernalWidth,inDepth,
+                                            is_training_ph,scope=tscope,layername=layername,
+                                            activateFunc=activateFunc,stride=stride)
+    return outputs
+
+
+
+
+
+def building_block_same_width(inputs, kernalWidth, inDepth,
+                              is_training_ph, scope=None, layername="layer",
+                              activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    feature width相同,两个卷积层,一个identity short cut connection层组成
+    short cut connection是identity short cut
+    the depth of outputs is same as inDepth
+
+    :param inputs:
+    :param kernalWidth:
+    :param inDepth:
+    :param is_training_ph:
+    :param scope:
+    :param layername:
+    :param activateFunc:
+    :param stride:
+    :return:
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+    depth = inDepth
+    tscope = scope + "layer1"
+
+    y1 = add_BN_conv_layer(inputs, kernalWidth, depth, depth,
+                           is_training_ph, tscope,activateFunc=activateFunc)
+
+    tscope = scope + "layer2"
+    y2 = add_BN_conv_layer(y1, kernalWidth, depth, depth,
+                           is_training_ph, tscope, activateFunc=None)
+
+    hx = tf.add(y2,inputs)
+    outputs = tf.nn.relu(hx)
+    return outputs
+
+def building_block_zero_pad(inputs,kernalWidth,inDepth,
+                            is_training_ph,scope=None, layername="layer",
+                            activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    首先是一层max pooling层,两层卷积层,和zero padding short cut connection 层组成
+    在增加维度时short cut connection使用zero padding
+    the depth of outputs is 2*inDepth
+
+    :param inputs:
+    :param kernalWidth:
+    :param inDepth:inputs depth
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+    depth = 2*inDepth
+    pool_layer = add_pool_layer(inputs)
+
+    pad_zero = tf.constant(0,dtype=tf.float32,shape=pool_layer.get_shape().as_list())
+
+
+    tscope = scope + "layer1"
+    y1 = add_BN_conv_layer(pool_layer,kernalWidth,inDepth,depth,
+                           is_training_ph,tscope,activateFunc=activateFunc)
+
+    tscope = scope + "layer2"
+    y2 = add_BN_conv_layer(y1,kernalWidth,depth,depth,
+                           is_training_ph,tscope,activateFunc=None)
+
+    hx = tf.add(y2,tf.concat(3,[pool_layer,pad_zero]))
+    outputs = tf.nn.relu(hx)
+    return outputs
+
+
+def building_block_project(inputs,kernalWidth,inDepth,
+                            is_training_ph,scope=None, layername="layer",
+                            activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
+    """
+    首先是一层max pooling层,,两层卷积层,和project short cut connection 层组成
+    在增加维度时short cut connection使用projection
+    the depth of outputs is 2*inDepth
+
+    """
+    if scope is None:
+        raise ValueError('scope should be a string')
+    depth = 2*inDepth
+    pool_layer = add_pool_layer(inputs)
+
+    tscope = scope+"proj"
+    proj_layer = add_BN_conv_layer(pool_layer,kernalWidth,inDepth,depth,
+                                   is_training_ph,tscope,activateFunc=None)
+
+    tscope = scope + "layer1"
+    y1 = add_BN_conv_layer(pool_layer,kernalWidth,inDepth,depth,
+                           is_training_ph,tscope,activateFunc=activateFunc)
+
+    tscope = scope + "layer2"
+    y2 = add_BN_conv_layer(y1,kernalWidth,depth,depth,
+                           is_training_ph,tscope,activateFunc=None)
+
+    hx = tf.add(y2,proj_layer)
+    outputs = tf.nn.relu(hx)
+    return outputs
+
+
+
+
 def add_BN_conv_layer(inputs, kernalWidth, inDepth, outDepth,
-                      is_training_ph, scope = None, layername="layer",
+                      is_training_ph, scope , layername="layer",
                       activateFunc=tf.nn.relu, stride=[1, 1, 1, 1]):
 
     with tf.name_scope(layername):
@@ -82,11 +296,11 @@ def add_BN_conv_layer(inputs, kernalWidth, inDepth, outDepth,
 
 
         outputs = tf.cond(is_training_ph,
-                           lambda: batch_norm(y,decay=0.92, is_training=True,
+                           lambda: batch_norm(y,decay=0.94, is_training=True,
                                               center=False, scale=True,
                                               activation_fn=activateFunc,
                                               updates_collections=None, scope=scope),
-                           lambda: batch_norm(y,decay=0.92, is_training=False,
+                           lambda: batch_norm(y,decay=0.94, is_training=False,
                                               center=False, scale=True,
                                               activation_fn=activateFunc,
                                               updates_collections=None, scope=scope,
@@ -115,9 +329,11 @@ def down_learning_rate(test_acc, lr):
     if test_acc >=0.8 and lr>5e-4:
         lr /= 5.0
     elif test_acc>0.8 and lr>5e-5:
-        lr *= 0.8
-    elif test_acc>0.9:
-        lr *= 0.9
+        lr *= 0.85
+    elif test_acc>0.9 and lr>1e-6:
+        lr *= 0.95
+    elif test_acc>0.95:
+        lr *= 0.99
 
     return lr
 
@@ -132,12 +348,14 @@ def test():
     while True:
         num += 1
         lr = down_learning_rate(acc,lr)
-        print num,lr
+        print "%d %f"%(num,lr)
         if lr < 1e-4:
             acc = 0.95
 
         if lr < 1e-5:
             acc = 0.96
+
+
 
 
 
